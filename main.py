@@ -52,7 +52,7 @@ def capture_and_send_notification(frame):
                   'Authorization': 'Bearer '+token}
 
         message = {
-            'message': f'Detected smoker in prohibited area at CB2301 {current_time}',
+            'message': f'Detected smoker in prohibited area at CB2301 {current_time} on {now_thai.strftime("%Y-%m-%d")}',
             # 'imageFile': open(new_image_path, 'rb')
         }
 
@@ -61,7 +61,8 @@ def capture_and_send_notification(frame):
                 'curl',
                 '-X', 'POST',
                 '-H', f'Authorization: Bearer {token}',
-                '-F', 'message=Detected smoker in prohibited area at CB2301 ' + current_time,
+                '-F', 'message=Detected smoker in prohibited area at CB2301 ' +
+                current_time + ' '+now_thai.strftime("%Y-%m-%d"),
                 '-F', f'imageFile=@{new_image_path}',
                 'https://notify-api.line.me/api/notify'
             ]
@@ -124,6 +125,7 @@ def main():
 
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         gray_frame_stacked = cv2.merge([gray_frame] * 3)
+
         result = model(gray_frame_stacked)[0]
         detections = sv.Detections.from_ultralytics(result)
         labels = [
@@ -137,7 +139,8 @@ def main():
             labels=labels
         )
 
-        cv2.imshow("CigAlert", frame)
+        cv2.imshow("Preprocessed Frame (Grayscale)", gray_frame)
+        # cv2.imshow("CigAlert", gray_frame)
 
         # Check if any smokers were detected
         # if any(class_id == 1 for _, _, _, class_id, _ in detections):
