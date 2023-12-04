@@ -37,7 +37,8 @@ def capture_and_send_notification(frame):
     # Save the captured frame as an image file
     image_path = '/Users/banu/Documents/GitHub/cig-alert2/images/captured_image.jpg'
     file_name, file_extension = os.path.splitext(os.path.basename(image_path))
-    new_file_name = f"{file_name}_{current_time}{file_extension}"
+    now_date = now_thai.strftime("%Y-%m-%d")
+    new_file_name = f"{file_name}_{now_date}_{current_time}{file_extension}"
     new_image_path = os.path.join(os.path.dirname(image_path), new_file_name)
 
     success = cv2.imwrite(new_image_path, frame)
@@ -52,7 +53,7 @@ def capture_and_send_notification(frame):
                   'Authorization': 'Bearer '+token}
 
         message = {
-            'message': f'Detected smoker in prohibited area at CB2301 {current_time} on {now_thai.strftime("%Y-%m-%d")}',
+            'message': f'Detected smoker in prohibited area at CB2306 {current_time} on {now_thai.strftime("%Y-%m-%d")}',
             # 'imageFile': open(new_image_path, 'rb')
         }
 
@@ -124,9 +125,10 @@ def main():
         equalized_frame = cv2.merge((eq_b, eq_g, eq_r))
 
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        bgr_frame = cv2.cvtColor(gray_frame, cv2.COLOR_GRAY2BGR)
         gray_frame_stacked = cv2.merge([gray_frame] * 3)
 
-        result = model(gray_frame_stacked)[0]
+        result = model(bgr_frame)[0]
         detections = sv.Detections.from_ultralytics(result)
         labels = [
             f"{model.model.names[class_id]} {confidence:0.2f}"
@@ -139,17 +141,17 @@ def main():
             labels=labels
         )
 
-        cv2.imshow("Preprocessed Frame (Grayscale)", gray_frame)
+        cv2.imshow("Preprocessed Frame (Grayscale)", frame)
         # cv2.imshow("CigAlert", gray_frame)
 
         # Check if any smokers were detected
         # if any(class_id == 1 for _, _, _, class_id, _ in detections):
         # capture_and_send_notification(frame)
 
-        if any(confidence > 0.7 and class_id == 1 for _, _, confidence, class_id, _ in detections):
+        if any(confidence > 0.6 and class_id == 1 for _, _, confidence, class_id, _ in detections):
             face_detected = True
 
-        if any(confidence > 0.7 and class_id == 0 for _, _, confidence, class_id, _ in detections):
+        if any(confidence > 0.6 and class_id == 0 for _, _, confidence, class_id, _ in detections):
             cigarette_detected = True
 
         def display_notification(frame, text):
